@@ -52,22 +52,47 @@ export default function SignUpPage() {
     });
 
     if (signUpError) {
-      setError(signUpError.message);
-    } else if (data.user) {
-      // Insert user profile
-      const { error: profileError } = await supabase.from("users").insert({
-        id: data.user.id,
-        email: data.user.email!,
-        username,
-        user_type: userType,
-      });
-
-      if (profileError) {
-        setError("Failed to create profile");
+      if (signUpError.message.includes("already registered")) {
+        setError("This email is already registered. Try signing in.");
       } else {
-        router.push("/");
+        setError(signUpError.message);
       }
+      setLoading(false);
+      return;
     }
+
+    if (data.user) {
+      // Check if profile already exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", data.user.id)
+        .single();
+
+      if (fetchError && fetchError.code !== "PGRST116") {
+        setError("Failed to check existing profile");
+        setLoading(false);
+        return;
+      }
+
+      if (!existingProfile) {
+        const { error: profileError } = await supabase.from("users").insert({
+          id: data.user.id,
+          email: data.user.email!,
+          username,
+          user_type: userType,
+        });
+
+        if (profileError) {
+          setError("Failed to create profile");
+          setLoading(false);
+          return;
+        }
+      }
+
+      router.push("/");
+    }
+
     setLoading(false);
   };
 
