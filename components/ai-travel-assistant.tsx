@@ -41,9 +41,7 @@ interface AITravelAssistantProps {
 export function AITravelAssistant({
   route,
   destinationCountry,
-  checklist,
-  routeData,
-  safetyReports,
+
   messages,
   input,
   handleInputChange,
